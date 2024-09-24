@@ -12,7 +12,7 @@ services:
     command: [ "postgres", "-c", "wal_level=logical" ]
     volumes:
       - ./data/pgdata:/var/lib/postgresql/data
-#      - ./postgres:/docker-entrypoint-initdb.d
+    #      - ./postgres:/docker-entrypoint-initdb.d
     healthcheck:
       test: "psql postgres -d postgres -c 'select 1'"
   redpanda:
@@ -70,6 +70,31 @@ services:
     volumes:
       - "./kafka/kafka-plugins:/kafka-plugins"
       - "./kafka/connectors:/kafka/config/connectors"
+  rabbitmq:
+    container_name: rabbitmq
+    image: arm64v8/rabbitmq:3-management-alpine
+    ports:
+      - "1883:1883"
+      - "5672:5672"
+      - "15672:15672"
+      - "1885:15675"
+    command: "/bin/bash -c \"rabbitmq-plugins enable --offline rabbitmq_mqtt rabbitmq_web_mqtt rabbitmq_amqp1_0; rabbitmq-server\""
+    volumes:
+      #      - "./data/rabbitmq/data/etc:/etc/rabbitmq"
+      #      - "./data/rabbitmq/data/lib:/var/lib/rabbitmq"
+      - "./data/rabbitmq/data/log:/var/log/rabbitmq"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+  tcp-relay:
+    container_name: tcp-relay
+    image: cloudamqp/websocket-tcp-relay
+    ports:
+      - 15670:15670
+    command:
+      - "--upstream=tcp://rabbitmq:5672"
+    depends_on:
+      - rabbitmq
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: jaeger
