@@ -15,6 +15,7 @@ services:
     #      - ./postgres:/docker-entrypoint-initdb.d
     healthcheck:
       test: "psql postgres -d postgres -c 'select 1'"
+
   redpanda:
     image: vectorized/redpanda:v23.2.9
     command:
@@ -31,6 +32,9 @@ services:
       - 8082:8082
       - 9092:9092
       - 29092:29092
+    volumes:
+#      - "./data/redpanda:/var/lib/redpanda/data"
+      - "./init-topics.sh:/usr/local/bin/init-topics.sh"
     depends_on:
       postgres:
         condition: service_healthy
